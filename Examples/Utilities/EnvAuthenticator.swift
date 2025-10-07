@@ -10,8 +10,11 @@ import Foundation
 /// To use this authenticator, ensure the following environment variables are set either at launch or in a .env file:
 ///
 /// - **ASC_KEY_ID**: The ID for the private key from App Store Connect
-/// - **ASC_ISSUER_ID**: The issuer ID from Apple assigned to your App Store Connect team.
 /// - **ASC_PRIVATE_KEY_PATH**: A path to the private key file
+///
+/// The following environment variable is required if the key is created at the team level, but not for individual keys:
+///
+/// - **ASC_ISSUER_ID**: The issuer ID from Apple assigned to your App Store Connect team.
 ///
 /// Each of these can be overridden as input to the authenticator, if you need it.
 public struct EnvAuthenticator: Authenticator {
@@ -47,9 +50,9 @@ public struct EnvAuthenticator: Authenticator {
         guard let keyID = env[keyIDVariableName] else {
             throw Error.missingEnvironmentVariable(keyIDVariableName)
         }
-        guard let issuerID = env[issuerIDVariableName] else {
-            throw Error.missingEnvironmentVariable(issuerIDVariableName)
-        }
+
+        let issuerID = env[issuerIDVariableName]
+
         guard let privateKeyPath = env[privateKeyPathVariableName] else {
             throw Error.missingEnvironmentVariable(privateKeyPathVariableName)
         }

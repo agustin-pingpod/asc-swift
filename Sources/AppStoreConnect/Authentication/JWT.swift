@@ -49,8 +49,8 @@ public struct JWT: Authenticator {
         var audience: String
         /// Your issuer ID from the API Keys page in App Store Connect.
         ///
-        /// Unique to an App Store Connect team.
-        var issuer: String
+        /// Unique to an App Store Connect team. Required when using a Team Key.
+        var issuer: String?
         /// The token’s creation time, in Unix epoch time.
         var issuedAt: TimeInterval?
         /// The token’s expiration time in Unix epoch time.
@@ -58,9 +58,14 @@ public struct JWT: Authenticator {
         /// Tokens that expire more than 20 minutes into the future are not valid except for resources listed in
         /// [Determine the Appropriate Token Lifetime](https://developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests#3878467).
         var expiry: TimeInterval
+        /// The token's subject.
+        ///
+        /// Must be set to 'user' when using an Individual Key.
+        /// - SeeAlso: [](https://developer.apple.com/documentation/appstoreconnectapi/generating-tokens-for-api-requests#Create-the-JWT-Payload-for-Individual-Keys)
+        var subject: String?
         /// A list of operations you want App Store Connect to allow for this token.
         ///
-        /// - SeeAlso: https://developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests#3878466
+        /// - SeeAlso: [](https://developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests#3878466)
         var scope: [String]?
 
         private enum CodingKeys: String, CodingKey {
@@ -68,7 +73,21 @@ public struct JWT: Authenticator {
             case issuer = "iss"
             case issuedAt = "iat"
             case expiry = "exp"
+            case subject = "sub"
             case scope
+        }
+    }
+
+    /// The type of API key: Team or Individual
+    enum KeyType: Sendable {
+        case team
+        case individual
+
+        var subject: String? {
+            switch self {
+                case .team: nil
+                case .individual: "user"
+            }
         }
     }
 
@@ -120,8 +139,10 @@ public struct JWT: Authenticator {
     public private(set) var api: API
     /// The token header.
     var header: Header
+    /// The type of API key (Team or Individual).
+    var keyType: KeyType
     /// ID of the App Store Connect team, issued by Apple.
-    var issuer: String
+    var issuer: String?
     /// The token’s creation time, in Unix epoch time.
     var issuedAt: TimeInterval?
     /// Lifetime of the token, in seconds.
@@ -145,7 +166,7 @@ public struct JWT: Authenticator {
     /// - Parameters:
     ///   - api: The API this ``Authenticator`` is compatible with.
     ///   - keyID: Private key ID from App Store Connect.
-    ///   - issuerID: ID of the App Store Connect team, issued by Apple.
+    ///   - issuerID: ID of the App Store Connect team, issued by Apple. Required when using a Team key.
     ///   - issuedAt: Optional timestamp of when the token was issued by Apple, in Unix epoch time.
     ///   - expiryDuration: Lifetime of the token, in seconds. See also [Determine the Appropriate Token Lifetime](https://developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests#3878467).
     ///   - scopes: Optional scopes to restrict access to the App Store Connect API to specific endpoints.
@@ -153,7 +174,7 @@ public struct JWT: Authenticator {
     public init(
         api: API = .appStoreConnect,
         keyID: String,
-        issuerID: String,
+        issuerID: String? = nil,
         issuedAt: TimeInterval? = nil,
         expiryDuration: TimeInterval,
         scopes: [String]? = nil,
@@ -176,7 +197,7 @@ public struct JWT: Authenticator {
     /// - Parameters:
     ///   - api: The API this ``Authenticator`` is compatible with.
     ///   - keyID: Private key ID from App Store Connect.
-    ///   - issuerID: ID of the App Store Connect team, issued by Apple.
+    ///   - issuerID: ID of the App Store Connect team, issued by Apple. Required when using a Team key.
     ///   - issuedAt: Optional timestamp of when the token was issued by Apple, in Unix epoch time.
     ///   - expiryDuration: Lifetime of the token, in seconds. See also [Determine the Appropriate Token Lifetime](https://developer.apple.com/documentation/appstoreconnectapi/generating_tokens_for_api_requests#3878467).
     ///   - scopes: Optional scopes to restrict access to the App Store Connect API to specific endpoints.
@@ -185,7 +206,7 @@ public struct JWT: Authenticator {
     init(
         api: API = .appStoreConnect,
         keyID: String,
-        issuerID: String,
+        issuerID: String? = nil,
         issuedAt: TimeInterval? = nil,
         expiryDuration: TimeInterval,
         scopes: [String]? = nil,
@@ -194,6 +215,7 @@ public struct JWT: Authenticator {
     ) {
         self.api = api
         self.header = Header(key: keyID)
+        self.keyType = issuerID == nil ? .individual : .team
         self.issuer = issuerID
         self.issuedAt = issuedAt
         self.expiryDuration = expiryDuration
@@ -236,6 +258,7 @@ public struct JWT: Authenticator {
             issuer: issuer,
             issuedAt: issuedAt,
             expiry: now.addingTimeInterval(expiryDuration).timeIntervalSince1970,
+            subject: keyType.subject,
             scope: scopes
         )
 
