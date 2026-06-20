@@ -24,13 +24,13 @@ def _asc_swift_dev_deps_impl(_mctx):
     http_archive(
         name = "com_apple_app_store_connect_api",
         build_file = "@asc_swift//bazel/specs:com_apple_app_store_connect_api/BUILD.overlay",
-        integrity = "sha256-kgIz0txmUPjhvWSo1050L+Vx17YlkMyfXtpRrbfRPYc=",
+        sha256 = "18d2e448db9ebac9f6fb183e786342f67dfaa0c515995d782694a776e26c2dfd",
         urls = ["https://developer.apple.com/sample-code/app-store-connect/app-store-connect-openapi-specification.zip"],
     )
     http_archive(
         name = "com_apple_enterprise_program_api",
         build_file = "@asc_swift//bazel/specs:com_apple_enterprise_program_api/BUILD.overlay",
-        integrity = "sha256-2O5Uisv1JY7dVFbQV/uw2sqmIB3i3To2K/NjiMOyfp0=",
+        sha256 = "d8ee548acbf5258edd5456d057fbb0dacaa6201de2dd3a362bf36388c3b27e9d",
         urls = ["https://developer.apple.com/sample-code/enterprise/enterprise-program-openapi-oas.zip"],
     )
     http_archive(
